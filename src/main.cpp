@@ -14,6 +14,7 @@
 #include "Led.h"
 #include "Log.h"
 #include "Mqtt.h"
+#include "Homekit.h"
 #include "MemX.h"
 #include "Port.h"
 #include "Queues.h"
@@ -197,6 +198,7 @@ void setup() {
 
 	Ftp_Init();
 	Mqtt_Init();
+	Homekit_Init();
 	#ifndef PN5180_ENABLE_LPCD
 		#if defined (RFID_READER_TYPE_MFRC522_SPI) || defined (RFID_READER_TYPE_MFRC522_I2C) || defined(RFID_READER_TYPE_PN5180)
 			Rfid_Init();
@@ -241,6 +243,7 @@ void loop() {
 		Ftp_Cyclic();
 		RotaryEncoder_Cyclic();
 		Mqtt_Cyclic();
+		Homekit_Cyclic();
 	}
 
 	AudioPlayer_Cyclic();
