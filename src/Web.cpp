@@ -606,10 +606,13 @@ bool JSONToSettings(JsonObject doc) {
 	}
 	if (doc.containsKey("general")) {
 		// general settings
-		if (gPrefsSettings.putUInt("initVolume", doc["general"]["initVolume"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeSp", doc["general"]["maxVolumeSp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeHp", doc["general"]["maxVolumeHp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("mInactiviyT", doc["general"]["sleepInactivity"].as<uint8_t>()) == 0) {
+		if (gPrefsSettings.putUInt("initVolume", doc["general"]["initVolume"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeSp", doc["general"]["maxVolumeSp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeHp", doc["general"]["maxVolumeHp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("mInactiviyT", doc["general"]["sleepInactivity"].as<uint8_t>()) == 0 || gPrefsSettings.putUChar("volumeCurve", doc["general"]["volumeCurve"].as<uint8_t>()) == 0 || gPrefsSettings.putBool("pauseOnMinVol", doc["general"]["pauseOnMinVol"].as<bool>()) == 0 || gPrefsSettings.putBool("savePlayPosExit", doc["general"]["savePlayPosExit"].as<bool>()) == 0 || gPrefsSettings.putBool("savePlayPosRfid", doc["general"]["savePlayPosRfid"].as<bool>()) == 0 || gPrefsSettings.putBool("playMono", doc["general"]["playMono"].as<bool>()) == 0 || gPrefsSettings.putBool("recoverVolBoot", doc["general"]["recoverVolBoot"].as<bool>()) == 0) {
 			Log_Printf(LOGLEVEL_ERROR, webSaveSettingsError, "general");
 			return false;
 		}
+		gPlayProperties.pauseOnMinVolume = doc["general"]["pauseOnMinVol"].as<bool>();
+		gPlayProperties.SavePlayPosRfidChange = doc["general"]["savePlayPosRfid"].as<bool>();
+		gPlayProperties.newPlayMono = doc["general"]["playMono"].as<bool>();
 	}
 	if (doc.containsKey("wifi")) {
 		// WiFi settings
@@ -775,6 +778,12 @@ static void settingsToJSON(JsonObject obj, const String section) {
 		generalObj["maxVolumeSp"].set(gPrefsSettings.getUInt("maxVolumeSp", 0));
 		generalObj["maxVolumeHp"].set(gPrefsSettings.getUInt("maxVolumeHp", 0));
 		generalObj["sleepInactivity"].set(gPrefsSettings.getUInt("mInactiviyT", 0));
+		generalObj["volumeCurve"].set(gPrefsSettings.getUChar("volumeCurve", 0));
+		generalObj["pauseOnMinVol"].set(gPrefsSettings.getBool("pauseOnMinVol", false));
+		generalObj["savePlayPosExit"].set(gPrefsSettings.getBool("savePlayPosExit", false));
+		generalObj["savePlayPosRfid"].set(gPrefsSettings.getBool("savePlayPosRfid", false));
+		generalObj["playMono"].set(gPrefsSettings.getBool("playMono", false));
+		generalObj["recoverVolBoot"].set(gPrefsSettings.getBool("recoverVolBoot", false));
 	}
 	if ((section == "") || (section == "wifi")) {
 		// WiFi settings
@@ -826,10 +835,16 @@ static void settingsToJSON(JsonObject obj, const String section) {
 		defaultsObj["maxVolumeSp"].set(21u); // AUDIOPLAYER_VOLUME_MAX
 		defaultsObj["maxVolumeHp"].set(18u); // gPrefsSettings.getUInt("maxVolumeHp", 0));
 		defaultsObj["sleepInactivity"].set(10u); // System_MaxInactivityTime
+		defaultsObj["volumeCurve"].set(0u); // VOLUMECURVE
 #ifdef NEOPIXEL_ENABLE
 		defaultsObj["initBrightness"].set(16u); // LED_INITIAL_BRIGHTNESS
 		defaultsObj["nightBrightness"].set(2u); // LED_INITIAL_NIGHT_BRIGHTNESS
 #endif
+		defaultsObj["pauseOnMinVol"].set(false); // PAUSE_ON_MIN_VOLUME
+		defaultsObj["savePlayPosExit"].set(false); // SAVE_PLAYPOS_BEFORE_SHUTDOWN
+		defaultsObj["savePlayPosRfid"].set(false); // SAVE_PLAYPOS_WHEN_RFID_CHANGE
+		defaultsObj["playMono"].set(false); // PLAY_MONO_SPEAKER
+		defaultsObj["recoverVolBoot"].set(false); // USE_LAST_VOLUME_AFTER_REBOOT
 #ifdef BATTERY_MEASURE_ENABLE
 	#ifdef MEASURE_BATTERY_VOLTAGE
 		defaultsObj["warnLowVoltage"].set(s_warningLowVoltage);

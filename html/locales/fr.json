@@ -254,6 +254,15 @@
             "speakerMax": "Volume maximal (haut-parleur)",
             "headphoneMax": "Volume maximal (écouteurs)"
         },
+        "options": {
+            "title": "Options",
+            "playmono": "Lecture mono",
+            "recovervolboot": "utiliser le dernier volume au redémarrage",
+            "pauseonminvolume": "pause au volume minimal",
+            "volumecurve" : "courbe plus plate pour les petits volumes",
+            "saveplayposshutdwon": "mémoriser la position de lecture lors de l'arrêt",
+            "saveplayposrfidchange": "Mémoriser la position de lecture lors du changement de tag RFID"
+        },
         "neopixel": {
             "title": "Neopixel (luminosité)",
             "restart": "Après le redémarrage",

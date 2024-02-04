@@ -671,7 +671,27 @@
 					<i class="fas fa-volume-down fa-2x .icon-pos"></i> <input data-provide="slider" type="number" data-slider-min="1" data-slider-max="21" min="1" max="21" class="form-control" id="maxVolumeHeadphone" name="maxVolumeHeadphone"
 						 data-slider-value="" value="" required>  <i class="fas fa-volume-up fa-2x .icon-pos"></i>
 						</div>
-				</fieldset>
+						<br>
+					</fieldset>
+				</div>
+				<br>
+				<div class="form-group col-md-12" id="optionsConfig">
+					<fieldset >
+						<legend class="w-auto" data-i18n="general.options.title"></legend>
+						<input type="checkbox" id="playMono" name="playMono" value="false">
+						<label for="playMono" data-i18n="general.options.playmono">Mono speaker</label><br>
+						<input type="checkbox" id="recoverVolBoot" name="recoverVolBoot" value="false">
+						<label for="recoverVolBoot" data-i18n="general.options.recovervolboot">Recover volume on reboot</label><br>
+						<input type="checkbox" id="pauseOnMinVolume" name="pauseOnMinVolume" value="false">
+						<label for="pauseOnMinVolume" data-i18n="general.options.pauseonminvolume">Pause on min volume</label><br>
+						<input type="checkbox" id="volumeCurve" name="volumeCurve" value="false">
+						<label for="volumeCurve" data-i18n="general.options.volumecurve">More flatten at lower volume</label><br>
+						<input type="checkbox" id="savePlayPosShutdwon" name="savePlayPosShutdwon" value="false">
+						<label for="savePlayPosShutdwon" data-i18n="general.options.saveplayposshutdwon">Save play position on shutdown</label><br>
+						<input type="checkbox" id="savePlayPosRfidChange" name="savePlayPosRfidChange" value="false">
+						<label for="savePlayPosRfidChange" data-i18n="general.options.saveplayposrfidchange">Save play position on Rfid change</label><br>
+						<br>
+					</fieldset>
 				</div>
 				<br>
 				<div class="form-group col-md-12" id="neopixelConfig" data-visible="false">
@@ -1615,6 +1635,12 @@
 			$('#maxVolumeSpeaker').bootstrapSlider('setValue', genSettings.maxVolumeSp);
 			$('#maxVolumeHeadphone').bootstrapSlider('setValue', genSettings.maxVolumeHp);
 			$('#inactivityTime').bootstrapSlider('setValue', genSettings.sleepInactivity);
+			document.getElementById("playMono").checked = genSettings.playMono;
+			document.getElementById("pauseOnMinVolume").checked = genSettings.pauseOnMinVol;
+			document.getElementById("volumeCurve").checked = genSettings.volumeCurve > 0;
+			document.getElementById("recoverVolBoot").checked = genSettings.recoverVolBoot;
+			document.getElementById("savePlayPosShutdwon").checked = genSettings.savePlayPosExit;
+			document.getElementById("savePlayPosRfidChange").checked = genSettings.savePlayPosRfid;
 		}
 		// current values
 		let currSettings = settings.current;
@@ -1636,6 +1662,12 @@
 			$('#voltageIndicatorHigh').bootstrapSlider('setValue', defSettings.indicatorHi);
 			$('#voltageCheckInterval').bootstrapSlider('setValue', defSettings.voltageCheckInterval);
 			$('#criticalVoltage').bootstrapSlider('setValue', defSettings.criticalVoltage);
+			document.getElementById("playMono").checked = defSettings.playMono;
+			document.getElementById("pauseOnMinVolume").checked = defSettings.pauseOnMinVol;
+			document.getElementById("volumeCurve").checked = defSettings.volumeCurve > 0;
+			document.getElementById("savePlayPosShutdwon").checked = defSettings.savePlayPosExit;
+			document.getElementById("savePlayPosRfidChange").checked = defSettings.savePlayPosRfid;
+			document.getElementById("recoverVolBoot").checked = defSettings.recoverVolBoot;			
 		}
 		// wifi
 		let wifiSettings = settings.wifi;
@@ -1929,12 +1961,22 @@
 
 	function genSettings(clickedId) {
 		lastIdclicked = clickedId;
+		var volumeCurve = 0;
+		if (document.getElementById("volumeCurve").checked) {
+			volumeCurve = 1;
+		}
 		var myObj = {
 			"general": {
 				initVolume: document.getElementById('initialVolume').value,
 				maxVolumeSp: document.getElementById('maxVolumeSpeaker').value,
 				maxVolumeHp: document.getElementById('maxVolumeHeadphone').value, 
-				sleepInactivity: document.getElementById('inactivityTime').value},
+				sleepInactivity: document.getElementById('inactivityTime').value,
+				volumeCurve: volumeCurve,
+				pauseOnMinVol: document.getElementById('pauseOnMinVolume').checked,
+				savePlayPosExit: document.getElementById('savePlayPosShutdwon').checked,
+				savePlayPosRfid: document.getElementById('savePlayPosRfidChange').checked,
+				playMono: document.getElementById('playMono').checked,
+				recoverVolBoot: document.getElementById('recoverVolBoot').checked},
 			"led": {
 				initBrightness: document.getElementById('initBrightness').value,
 				nightBrightness: document.getElementById('nightBrightness').value},

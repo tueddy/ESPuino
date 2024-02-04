@@ -252,6 +252,15 @@
             "speakerMax": "Maximal (Lautsprecher)",
             "headphoneMax": "Maximal (Kopfhörer)"
         },
+        "options": {
+            "title": "Optionen",
+            "playmono": "Mono-Wiedergabe",
+            "recovervolboot": "Letzte Lautstärke bei Neustart verwenden",
+            "pauseonminvolume": "Pause bei minimaler Lautstärke",
+            "volumecurve" : "Flacherer Verlauf bei kleinen Lautstärken",
+            "saveplayposshutdwon": "Abspielposition beim Ausschalten merken",
+            "saveplayposrfidchange": "Abspielposition bei RFID-Tag Wechsel merken"
+        },
         "neopixel": {
             "title": "Neopixel (Helligkeit)",
             "restart": "Nach dem Einschalten",

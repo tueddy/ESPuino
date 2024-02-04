@@ -26,6 +26,8 @@ typedef struct { // Bit field
 	uint8_t tellMode			 : 2; // Tell mode for text to speech announcments
 	bool currentSpeechActive	 : 1; // If speech-play is active
 	bool lastSpeechActive		 : 1; // If speech-play was active
+	bool pauseOnMinVolume		 : 1; // When playback is active and volume is changed to zero, playback is paused automatically.
+	bool SavePlayPosRfidChange   : 1; // Save last play-position
 	size_t coverFilePos; // current cover file position
 	size_t coverFileSize; // current cover file size
 	size_t audioFileSize; // file size of current audio file
