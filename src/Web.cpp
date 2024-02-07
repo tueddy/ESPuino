@@ -784,7 +784,7 @@ static void settingsToJSON(JsonObject obj, const String section) {
 		generalObj["savePlayPosRfid"].set(gPrefsSettings.getBool("savePlayPosRfid", false));
 		generalObj["playMono"].set(gPrefsSettings.getBool("playMono", false));
 		generalObj["recoverVolBoot"].set(gPrefsSettings.getBool("recoverVolBoot", false));
-		generalObj["playLastRfidBoot"].set(gPrefsSettings.getBool("playLastRfid", false));		
+		generalObj["playLastRfidBoot"].set(gPrefsSettings.getBool("playLastRfid", false));
 	}
 	if ((section == "") || (section == "wifi")) {
 		// WiFi settings
