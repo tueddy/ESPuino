@@ -259,7 +259,8 @@
             "pauseonminvolume": "Pause bei minimaler Lautstärke",
             "volumecurve" : "Flacherer Verlauf bei kleinen Lautstärken",
             "saveplayposshutdwon": "Abspielposition beim Ausschalten merken",
-            "saveplayposrfidchange": "Abspielposition bei RFID-Tag Wechsel merken"
+            "saveplayposrfidchange": "Abspielposition bei RFID-Tag Wechsel merken",
+            "playlastrfidreboot": "Letztes RFID-Tag nach Neustart wieder abspielen"
         },
         "neopixel": {
             "title": "Neopixel (Helligkeit)",

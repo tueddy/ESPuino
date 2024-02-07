@@ -261,7 +261,8 @@
             "pauseonminvolume": "pause au volume minimal",
             "volumecurve" : "courbe plus plate pour les petits volumes",
             "saveplayposshutdwon": "mémoriser la position de lecture lors de l'arrêt",
-            "saveplayposrfidchange": "Mémoriser la position de lecture lors du changement de tag RFID"
+            "saveplayposrfidchange": "Mémoriser la position de lecture lors du changement de tag RFID",
+            "playlastrfidreboot": "Reproduire le dernier tag RFID après un redémarrage"
         },
         "neopixel": {
             "title": "Neopixel (luminosité)",

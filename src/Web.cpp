@@ -606,7 +606,7 @@ bool JSONToSettings(JsonObject doc) {
 	}
 	if (doc.containsKey("general")) {
 		// general settings
-		if (gPrefsSettings.putUInt("initVolume", doc["general"]["initVolume"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeSp", doc["general"]["maxVolumeSp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeHp", doc["general"]["maxVolumeHp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("mInactiviyT", doc["general"]["sleepInactivity"].as<uint8_t>()) == 0 || gPrefsSettings.putUChar("volumeCurve", doc["general"]["volumeCurve"].as<uint8_t>()) == 0 || gPrefsSettings.putBool("pauseOnMinVol", doc["general"]["pauseOnMinVol"].as<bool>()) == 0 || gPrefsSettings.putBool("savePlayPosExit", doc["general"]["savePlayPosExit"].as<bool>()) == 0 || gPrefsSettings.putBool("savePlayPosRfid", doc["general"]["savePlayPosRfid"].as<bool>()) == 0 || gPrefsSettings.putBool("playMono", doc["general"]["playMono"].as<bool>()) == 0 || gPrefsSettings.putBool("recoverVolBoot", doc["general"]["recoverVolBoot"].as<bool>()) == 0) {
+		if (gPrefsSettings.putUInt("initVolume", doc["general"]["initVolume"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeSp", doc["general"]["maxVolumeSp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("maxVolumeHp", doc["general"]["maxVolumeHp"].as<uint8_t>()) == 0 || gPrefsSettings.putUInt("mInactiviyT", doc["general"]["sleepInactivity"].as<uint8_t>()) == 0 || gPrefsSettings.putUChar("volumeCurve", doc["general"]["volumeCurve"].as<uint8_t>()) == 0 || gPrefsSettings.putBool("pauseOnMinVol", doc["general"]["pauseOnMinVol"].as<bool>()) == 0 || gPrefsSettings.putBool("savePlayPosExit", doc["general"]["savePlayPosExit"].as<bool>()) == 0 || gPrefsSettings.putBool("savePlayPosRfid", doc["general"]["savePlayPosRfid"].as<bool>()) == 0 || gPrefsSettings.putBool("playMono", doc["general"]["playMono"].as<bool>()) == 0 || gPrefsSettings.putBool("recoverVolBoot", doc["general"]["recoverVolBoot"].as<bool>()) == 0 || gPrefsSettings.putBool("playLastRfid", doc["general"]["playLastRfidBoot"].as<bool>()) == 0) {
 			Log_Printf(LOGLEVEL_ERROR, webSaveSettingsError, "general");
 			return false;
 		}
@@ -784,6 +784,7 @@ static void settingsToJSON(JsonObject obj, const String section) {
 		generalObj["savePlayPosRfid"].set(gPrefsSettings.getBool("savePlayPosRfid", false));
 		generalObj["playMono"].set(gPrefsSettings.getBool("playMono", false));
 		generalObj["recoverVolBoot"].set(gPrefsSettings.getBool("recoverVolBoot", false));
+		generalObj["playLastRfidBoot"].set(gPrefsSettings.getBool("playLastRfid", false));		
 	}
 	if ((section == "") || (section == "wifi")) {
 		// WiFi settings
@@ -845,6 +846,7 @@ static void settingsToJSON(JsonObject obj, const String section) {
 		defaultsObj["savePlayPosRfid"].set(false); // SAVE_PLAYPOS_WHEN_RFID_CHANGE
 		defaultsObj["playMono"].set(false); // PLAY_MONO_SPEAKER
 		defaultsObj["recoverVolBoot"].set(false); // USE_LAST_VOLUME_AFTER_REBOOT
+		defaultsObj["playLastRfidBoot"].set(false); // PLAY_LAST_RFID_AFTER_REBOOT
 #ifdef BATTERY_MEASURE_ENABLE
 	#ifdef MEASURE_BATTERY_VOLTAGE
 		defaultsObj["warnLowVoltage"].set(s_warningLowVoltage);
@@ -1026,9 +1028,9 @@ void handlePostSettings(AsyncWebServerRequest *request, JsonVariant &json) {
 void handleDebugRequest(AsyncWebServerRequest *request) {
 
 #ifdef BOARD_HAS_PSRAM
-	SpiRamJsonDocument doc(1000);
+	SpiRamJsonDocument doc(2048);
 #else
-	StaticJsonDocument<1000> doc;
+	StaticJsonDocument<2048> doc;
 #endif
 
 	JsonObject infoObj = doc.createNestedObject("info");

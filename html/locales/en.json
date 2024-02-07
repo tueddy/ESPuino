@@ -259,7 +259,8 @@
             "pauseonminvolume": "Pause at minimum volume",
             "volumecurve" : "More flatten at lower volumes",
             "saveplayposshutdwon": "Remember playback position when switching off",
-            "saveplayposrfidchange": "Remember playback position when changing RFID tag"
+            "saveplayposrfidchange": "Remember playback position when changing RFID tag",
+            "playlastrfidreboot": "Replay last RFID tag after restart"
         },
         "neopixel": {
             "title": "Neopixel (brightness)",

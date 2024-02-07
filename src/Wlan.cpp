@@ -333,12 +333,10 @@ void handleWifiStateConnectionSuccess() {
 	delete dnsServer;
 	dnsServer = nullptr;
 
-#ifdef PLAY_LAST_RFID_AFTER_REBOOT
-	if (gPlayLastRfIdWhenWiFiConnected && gTriedToConnectToHost) {
+	if (gPrefsSettings.getBool("playLastRfid", false) && gPlayLastRfIdWhenWiFiConnected && gTriedToConnectToHost) {
 		gPlayLastRfIdWhenWiFiConnected = false;
 		recoverLastRfidPlayedFromNvs(true);
 	}
-#endif
 
 	wifiState = WIFI_STATE_CONNECTED;
 }

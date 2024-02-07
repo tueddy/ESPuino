@@ -690,6 +690,8 @@
 						<label for="savePlayPosShutdwon" data-i18n="general.options.saveplayposshutdwon">Save play position on shutdown</label><br>
 						<input type="checkbox" id="savePlayPosRfidChange" name="savePlayPosRfidChange" value="false">
 						<label for="savePlayPosRfidChange" data-i18n="general.options.saveplayposrfidchange">Save play position on Rfid change</label><br>
+						<input type="checkbox" id="playLastRfidReboot" name="playLastRfidReboot" value="false">
+						<label for="playLastRfidReboot" data-i18n="general.options.playlastrfidreboot">Play last RFID after reboot</label><br>
 						<br>
 					</fieldset>
 				</div>
@@ -1641,6 +1643,7 @@
 			document.getElementById("recoverVolBoot").checked = genSettings.recoverVolBoot;
 			document.getElementById("savePlayPosShutdwon").checked = genSettings.savePlayPosExit;
 			document.getElementById("savePlayPosRfidChange").checked = genSettings.savePlayPosRfid;
+			document.getElementById("playLastRfidReboot").checked = genSettings.playLastRfidBoot;
 		}
 		// current values
 		let currSettings = settings.current;
@@ -1668,6 +1671,7 @@
 			document.getElementById("savePlayPosShutdwon").checked = defSettings.savePlayPosExit;
 			document.getElementById("savePlayPosRfidChange").checked = defSettings.savePlayPosRfid;
 			document.getElementById("recoverVolBoot").checked = defSettings.recoverVolBoot;			
+			document.getElementById("playLastRfidReboot").checked = defSettings.playLastRfidBoot;
 		}
 		// wifi
 		let wifiSettings = settings.wifi;
@@ -1977,6 +1981,7 @@
 				savePlayPosRfid: document.getElementById('savePlayPosRfidChange').checked,
 				playMono: document.getElementById('playMono').checked,
 				recoverVolBoot: document.getElementById('recoverVolBoot').checked},
+				playLastRfidBoot: document.getElementById("playLastRfidReboot").checked,
 			"led": {
 				initBrightness: document.getElementById('initBrightness').value,
 				nightBrightness: document.getElementById('nightBrightness').value},
