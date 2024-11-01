@@ -1,14 +1,12 @@
 #include <Arduino.h>
 #include "settings.h"
 
+#include "AudioPlayer.h"
 #include "Cmd.h"
 #include "HomeSpan.h"
 #include "Log.h"
 #include "System.h"
 #include "Wlan.h"
-
-#include <AudioPlayer.h>
-
 
 //
 // ESPuino Homekit support

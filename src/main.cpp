@@ -12,6 +12,7 @@
 #include "Common.h"
 #include "Ftp.h"
 #include "HallEffectSensor.h"
+#include "Homekit.h"
 #include "IrReceiver.h"
 #include "Led.h"
 #include "Log.h"
@@ -27,7 +28,6 @@
 #include "Web.h"
 #include "Wlan.h"
 #include "revision.h"
-#include "Homekit.h"
 
 #include <Wire.h>
 
