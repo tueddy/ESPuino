@@ -60,6 +60,7 @@
 	//#define SAVE_PLAYPOS_WHEN_RFID_CHANGE // When playback is active and mode audiobook was selected, last play-position is saved automatically for old playlist when new RFID-tag is applied
 	//#define HALLEFFECT_SENSOR_ENABLE      // Support for hallsensor. For fine-tuning please adjust HallEffectSensor.h Please note: only user-support provided (https://forum.espuino.de/t/magnetische-hockey-tags/1449/35)
 	#define VOLUMECURVE 0 					// 0=square, 1=logarithmic (1 is more flatten at lower volume)
+	#define HOMEKIT                         // Enables Apple Homekit support
 
 	//################## set PAUSE_WHEN_RFID_REMOVED behaviour #############################
 	#ifdef PAUSE_WHEN_RFID_REMOVED

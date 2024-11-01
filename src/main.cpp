@@ -27,6 +27,7 @@
 #include "Web.h"
 #include "Wlan.h"
 #include "revision.h"
+#include "Homekit.h"
 
 #include <Wire.h>
 
@@ -233,6 +234,7 @@ void loop() {
 		Ftp_Cyclic();
 		RotaryEncoder_Cyclic();
 		Mqtt_Cyclic();
+		Homekit_Cyclic();
 	}
 	vTaskDelay(portTICK_PERIOD_MS * 1u);
 	AudioPlayer_Cyclic();
