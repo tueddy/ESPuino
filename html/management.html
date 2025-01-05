@@ -198,6 +198,23 @@
 			/* Make sure the jstree context menu is most top */
 			z-index: 99999;
 		}
+
+		.dash {
+			width: 2em;
+			height: .5em;
+			background-color: var(--bs-body-color);
+			border-radius: .25em;
+			display: inline-block;
+		}
+
+		.dot {
+			width: 0.5em;
+			height: 0.5em;
+			background-color: var(--bs-body-color);
+			border-radius: 0.25em;
+			display: inline-block;
+			margin: auto 0.85em;
+		}
 	</style>
 </head>
 
@@ -895,7 +912,7 @@
 				<form action="#generalConfig" method="POST" onsubmit="genSettings('generalConfig'); return false">
 					<div class="col-md-12 mb-4">
 						<fieldset>
-							<legend class="w-auto" data-i18n="general.volume.title"></legend><br>
+							<legend data-i18n="general.volume.title"></legend>
 							<label for="initialVolume" data-i18n="[prepend]general.volume.restart">:</label>
 							<div class="slider-container">
 								<div class="float-end" style="padding-left: 30px">
@@ -942,7 +959,7 @@
 					</div>
 					<div class="col-md-12 mb-4" id="optionsConfig">
 						<fieldset >
-							<legend class="w-auto" data-i18n="general.options.title"></legend><br>
+							<legend data-i18n="general.options.title"></legend>
 							<div class="d-flex gap-2">
 								<input type="checkbox" id="savePlayPosShutdown" name="savePlayPosShutdown" value="false">
 								<label for="savePlayPosShutdown" data-i18n="general.options.savePlayPosShutdown"></label>
@@ -977,7 +994,7 @@
 					</div>
 					<div class="col-md-12 mb-4" id="neopixelConfig" data-visible="false">
 						<fieldset>
-							<legend class="w-auto" data-i18n="general.neopixel.title"></legend><br>
+							<legend data-i18n="general.neopixel.title"></legend>
 							<label for="initBrightness" data-i18n="[prepend]general.neopixel.restart">:</label>
 							<div class="slider-container">
 								<div class="float-end" style="padding-left: 30px">
@@ -1108,14 +1125,14 @@
 										data-slider-value="" name="voltageCheckInterval" value="" required>
 								</div>
 								<div class="float-end" style="padding-left: 10px">
-									<i class="fas fas fa-hourglass-end fa-2x .icon-pos" fa-2x .icon-pos></i>
+									<i class="fas fas fa-hourglass-end fa-2x .icon-pos"></i>
 								</div>
 							</div>
 						</fieldset>
 					</div>
 					<div class="col-md-12 mb-4" id="playlistConfig">
 						<fieldset>
-							<legend class="w-auto" data-i18n="general.playlist.title"></legend><br>
+							<legend data-i18n="general.playlist.title"></legend>
 							<label for="playlistSortMode" data-i18n="[prepend]general.playlist.sortMode">:</label>
 							<select id="playlistSortMode" name="playlistSortMode" class="form-control form-select">
 								<option value="3" selected data-i18n="general.playlist.strnatcasecmp"></option>
@@ -1124,82 +1141,108 @@
 							</select>
 						</fieldset>
 					</div>
-					<p data-i18n="settingsex.title"></p>
-					<button class="btn btn-primary" type="button" data-bs-toggle="collapse"
-						data-bs-target="#settingsExConfigContainer" aria-expanded="false"
-						aria-controls="settingsExConfigContainer" data-i18n="showhide"></button><br><br>
-					<span class="collapse" id="settingsExConfigContainer">
-					<div class="col-md-12 mb-4" id="rotaryConfig" style="display:none">
-						<fieldset>
-							<legend class="w-auto" data-i18n="settingsex.rotary.title"></legend><br>
-							<input type="checkbox" id="rotaryReverse" name="rotaryReverse" value="false">&nbsp;
-							<label for="rotaryReverse" data-i18n="settingsex.rotary.reverse"></label>
-						</fieldset>
+					<div class="accordion mb-4" id="settingsAccordion">
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button data-i18n="[append]settingsex.title" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#settingsAccordionExtra" aria-expanded="false" aria-controls="settingsAccordionExtra"><i class="fa-solid fa-cog"></i>&nbsp;</button>
+							</h2>
+							<div id="settingsAccordionExtra" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+								<div class="accordion-body">
+									<div class="mb-4 d-none" id="rotaryConfig">
+										<fieldset>
+											<legend data-i18n="settingsex.rotary.title"></legend>
+											<div class="pb-2">
+												<input type="checkbox" id="rotaryReverse" name="rotaryReverse" value="false">&nbsp;
+												<label for="rotaryReverse" data-i18n="settingsex.rotary.reverse"></label>
+											</div>
+										</fieldset>
+									</div>
+									<fieldset class="mb-4">
+										<legend data-i18n="settingsex.led.title"></legend>
+										<div class="mb-2">
+											<label for="led_numIndicator" data-i18n="settingsex.led.numindicator"></label>:
+											<input type="number" class="form-control" id="led_numIndicator" name="led_numIndicator" min="0" max="128">
+										</div>
+										<div class="mb-2">
+											<label for="led_numControl" data-i18n="settingsex.led.numcontrol"></label>:
+											<input type="number" class="form-control" id="led_numControl" name="led_numcontrol" min="0" max="128" onChange="listControlColors(Number(this.value), null)">
+											<div id="controlColorList" class="mb-2 d-none"></div>
+											<div id="controlColorTemp" class="pb-2 d-none">
+												<span data-i18n="settingsex.led.controlled"></span>&nbsp;<span class="ledNumber"></span>:&nbsp;<input type="color" value="#ffffff">
+											</div>
+										</div>
+										<div class="mb-2">
+											<label for="led_idleDots" data-i18n="settingsex.led.numidledots"></label>:
+											<input type="number" class="form-control" id="led_idleDots" name="led_idleDots" min="0" max="128">
+										</div>
+										<div class="mb-2">
+											<label for="led_hueStart" data-i18n="settingsex.led.huestart"></label>:
+											<input type="number" class="form-control" id="led_hueStart" name="led_hueStart">
+										</div>
+										<div class="mb-2">
+											<label for="led_hueEnd" data-i18n="settingsex.led.hueend"></label>:
+											<input type="number" class="form-control" id="led_hueEnd" name="led_hueEnd">
+										</div>
+										<div class="mb-2">
+											<label for="led_dimStates" data-i18n="settingsex.led.dimmablestates"></label>:
+											<input type="number" class="form-control" id="led_dimStates" name="led_dimStates">
+										</div>
+										<div class="mb-2">
+											<label for="led_offsetStart" data-i18n="settingsex.led.offset"></label>:
+											<input type="number" class="form-control" id="led_offsetStart" name="led_offsetStart">
+										</div>
+										<div class="mb-2">
+											<input type="checkbox" id="led_offsetPause" name="led_offsetPause" value="false">&nbsp;
+											<label for="led_offsetPause" data-i18n="settingsex.led.offsetpause"></label>
+										</div>
+										<div class="mb-2">
+											<input type="checkbox" id="led_reverseRotation" name="led_reverseRotation" value="false">&nbsp;
+											<label for="led_reverseRotation" data-i18n="settingsex.led.reverserotation"></label>	
+										</div>
+									</fieldset>
+									<fieldset class="mb-4">
+										<legend data-i18n="settingsex.buttons.title"></legend>
+										<legend class="fs-5" data-i18n="settingsex.buttons.button0"></legend>
+										<label for="cmdselect_short_0" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_0" class="form-control form-select"></select>
+										<label for="cmdselect_long_0" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_0" class="form-control form-select"></select><br>	
+										<legend class="fs-5" data-i18n="settingsex.buttons.button1"></legend>
+										<label for="cmdselect_short_1" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_1" class="form-control form-select"></select>
+										<label for="cmdselect_long_1" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_1" class="form-control form-select"></select><br>	
+										<legend class="fs-5" data-i18n="settingsex.buttons.button2"></legend>
+										<label for="cmdselect_short_2" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_2" class="form-control form-select"></select>
+										<label for="cmdselect_long_2" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_2" class="form-control form-select"></select><br>	
+										<legend class="fs-5" data-i18n="settingsex.buttons.button3"></legend>
+										<label for="cmdselect_short_3" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_3" class="form-control form-select"></select>
+										<label for="cmdselect_long_3" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_3" class="form-control form-select"></select><br>	
+										<legend class="fs-5" data-i18n="settingsex.buttons.button4"></legend>
+										<label for="cmdselect_short_4" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_4" class="form-control form-select"></select>
+										<label for="cmdselect_long_4" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_4" class="form-control form-select"></select><br>	
+										<legend class="fs-5" data-i18n="settingsex.buttons.button5"></legend>
+										<label for="cmdselect_short_5" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_5" class="form-control form-select"></select>
+										<label for="cmdselect_long_5" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_5" class="form-control form-select"></select>
+									</fieldset>
+									<fieldset class="mb-4">
+										<legend data-i18n="settingsex.multibuttons.title"></legend>
+										<label for="cmdselect_multi_01" data-i18n="settingsex.multibuttons.01"></label>:&nbsp;<select id="cmdselect_multi_01" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_02" data-i18n="settingsex.multibuttons.02"></label>:&nbsp;<select id="cmdselect_multi_02" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_03" data-i18n="settingsex.multibuttons.03"></label>:&nbsp;<select id="cmdselect_multi_03" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_04" data-i18n="settingsex.multibuttons.04"></label>:&nbsp;<select id="cmdselect_multi_04" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_05" data-i18n="settingsex.multibuttons.05"></label>:&nbsp;<select id="cmdselect_multi_05" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_12" data-i18n="settingsex.multibuttons.12"></label>:&nbsp;<select id="cmdselect_multi_12" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_13" data-i18n="settingsex.multibuttons.13"></label>:&nbsp;<select id="cmdselect_multi_13" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_14" data-i18n="settingsex.multibuttons.14"></label>:&nbsp;<select id="cmdselect_multi_14" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_15" data-i18n="settingsex.multibuttons.15"></label>:&nbsp;<select id="cmdselect_multi_15" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_23" data-i18n="settingsex.multibuttons.23"></label>:&nbsp;<select id="cmdselect_multi_23" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_24" data-i18n="settingsex.multibuttons.24"></label>:&nbsp;<select id="cmdselect_multi_24" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_25" data-i18n="settingsex.multibuttons.25"></label>:&nbsp;<select id="cmdselect_multi_25" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_34" data-i18n="settingsex.multibuttons.34"></label>:&nbsp;<select id="cmdselect_multi_34" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_35" data-i18n="settingsex.multibuttons.35"></label>:&nbsp;<select id="cmdselect_multi_35" class="form-control form-select"></select><br>
+										<label for="cmdselect_multi_45" data-i18n="settingsex.multibuttons.45"></label>:&nbsp;<select id="cmdselect_multi_45" class="form-control form-select"></select><br>
+									</fieldset>
+								</div>
+							</div>
+						</div>
 					</div>
-					<div class="col-md-12 mb-4" id="settingsExConfig">
-						<fieldset>
-							<legend class="w-auto" data-i18n="settingsex.led.title"></legend><br>
-							<label for="led_numIndicator" data-i18n="settingsex.led.numindicator"></label>: <br>
-							<input type="number" class="form-control" id="led_numIndicator" name="led_numIndicator" min="0" max="128"><br>
-							<label for="led_numControl" data-i18n="settingsex.led.numcontrol"></label>: <br>
-							<input type="number" class="form-control" id="led_numControl" name="led_numcontrol" min="0" max="128" onChange="listControlColors(Number(this.value), null)"><br>
-							<div id="ControlColorList" style="display:none"></div>
-							<label for="led_idleDots" data-i18n="settingsex.led.numidledots"></label>: <br>
-							<input type="number" class="form-control" id="led_idleDots" name="led_idleDots" min="0" max="128"><br>
-							<label for="led_hueStart" data-i18n="settingsex.led.huestart"></label>: <br>
-							<input type="number" class="form-control" id="led_hueStart" name="led_hueStart"><br>
-							<label for="led_hueEnd" data-i18n="settingsex.led.hueend"></label>: <br>
-							<input type="number" class="form-control" id="led_hueEnd" name="led_hueEnd"><br>
-							<label for="led_dimStates" data-i18n="settingsex.led.dimmablestates"></label>: <br>
-							<input type="number" class="form-control" id="led_dimStates" name="led_dimStates"><br>
-							<label for="led_offsetStart" data-i18n="settingsex.led.offset"></label>: <br>
-							<input type="number" class="form-control" id="led_offsetStart" name="led_offsetStart"><br>
-							<input type="checkbox" id="led_offsetPause" name="led_offsetPause" value="false">&nbsp;
-							<label for="led_offsetPause" data-i18n="settingsex.led.offsetpause"></label><br>
-							<input type="checkbox" id="led_reverseRotation" name="led_reverseRotation" value="false">&nbsp;
-							<label for="led_reverseRotation" data-i18n="settingsex.led.reverserotation"></label><br><br>	
-						</fieldset>
-						<fieldset>
-							<legend class="w-auto" data-i18n="settingsex.buttons.title"></legend><br>
-							<legend class="fs-5" data-i18n="settingsex.buttons.button0"></legend>
-							<label for="cmdselect_short_0" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_0" class="form-control form-select"></select><br>
-							<label for="cmdselect_long_0" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_0" class="form-control form-select"></select><br><br>	
-							<legend class="fs-5" data-i18n="settingsex.buttons.button1"></legend>
-							<label for="cmdselect_short_1" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_1" class="form-control form-select"></select><br>
-							<label for="cmdselect_long_1" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_1" class="form-control form-select"></select><br><br>	
-							<legend class="fs-5" data-i18n="settingsex.buttons.button2"></legend>
-							<label for="cmdselect_short_2" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_2" class="form-control form-select"></select><br>
-							<label for="cmdselect_long_2" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_2" class="form-control form-select"></select><br><br>	
-							<legend class="fs-5" data-i18n="settingsex.buttons.button3"></legend>
-							<label for="cmdselect_short_3" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_3" class="form-control form-select"></select><br>
-							<label for="cmdselect_long_3" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_3" class="form-control form-select"></select><br><br>	
-							<legend class="fs-5" data-i18n="settingsex.buttons.button4"></legend>
-							<label for="cmdselect_short_4" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_4" class="form-control form-select"></select><br>
-							<label for="cmdselect_long_4" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_4" class="form-control form-select"></select><br><br>	
-							<legend class="fs-5" data-i18n="settingsex.buttons.button5"></legend>
-							<label for="cmdselect_short_5" data-i18n="settingsex.buttons.short"></label>:&nbsp;<select id="cmdselect_short_5" class="form-control form-select"></select><br>
-							<label for="cmdselect_long_5" data-i18n="settingsex.buttons.long"></label>:&nbsp;<select id="cmdselect_long_5" class="form-control form-select"></select><br><br>	
-						</fieldset>
-						<fieldset>
-							<legend class="w-auto" data-i18n="settingsex.multibuttons.title"></legend><br>
-							<label for="cmdselect_multi_01" data-i18n="settingsex.multibuttons.01"></label>:&nbsp;<select id="cmdselect_multi_01" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_02" data-i18n="settingsex.multibuttons.02"></label>:&nbsp;<select id="cmdselect_multi_02" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_03" data-i18n="settingsex.multibuttons.03"></label>:&nbsp;<select id="cmdselect_multi_03" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_04" data-i18n="settingsex.multibuttons.04"></label>:&nbsp;<select id="cmdselect_multi_04" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_05" data-i18n="settingsex.multibuttons.05"></label>:&nbsp;<select id="cmdselect_multi_05" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_12" data-i18n="settingsex.multibuttons.12"></label>:&nbsp;<select id="cmdselect_multi_12" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_13" data-i18n="settingsex.multibuttons.13"></label>:&nbsp;<select id="cmdselect_multi_13" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_14" data-i18n="settingsex.multibuttons.14"></label>:&nbsp;<select id="cmdselect_multi_14" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_15" data-i18n="settingsex.multibuttons.15"></label>:&nbsp;<select id="cmdselect_multi_15" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_23" data-i18n="settingsex.multibuttons.23"></label>:&nbsp;<select id="cmdselect_multi_23" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_24" data-i18n="settingsex.multibuttons.24"></label>:&nbsp;<select id="cmdselect_multi_24" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_25" data-i18n="settingsex.multibuttons.25"></label>:&nbsp;<select id="cmdselect_multi_25" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_34" data-i18n="settingsex.multibuttons.34"></label>:&nbsp;<select id="cmdselect_multi_34" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_35" data-i18n="settingsex.multibuttons.35"></label>:&nbsp;<select id="cmdselect_multi_35" class="form-control form-select"></select><br>
-							<label for="cmdselect_multi_45" data-i18n="settingsex.multibuttons.45"></label>:&nbsp;<select id="cmdselect_multi_45" class="form-control form-select"></select><br>
-						</fieldset>
-					</div>
-					</span>
 					<div class="text-center">
 						<button type="reset" class="btn btn-warning" data-i18n="reset"
 							onclick="resetSettings()"></button>&nbsp;<button type="submit" class="btn btn-primary"
@@ -2127,18 +2170,20 @@
 		// list the LED control colors
 		function listControlColors(numControlColor, data) {
 			console.log(data);
-			var list = document.getElementById("ControlColorList");
-			var h = "";
-			var color = 0xffffff;
-			for (var i = 0; i < numControlColor; i++) {
-				if (data) {
-					color = data[i];
+			const list = $("#controlColorList");
+			list.toggleClass("d-none", numControlColor <= 0).empty();
+			if (numControlColor > 0) {
+				const t = $("#controlColorTemp");
+				for (let i = 0; i < numControlColor; i++) {
+					const ledN = t.clone().removeClass("d-none");
+					const input = $("input", ledN).attr("id", `controlColor${i}`);
+					$(".ledNumber", ledN).text(i);
+					if (data) {
+						input.val(getHexColor(data[i]));
+					}
+					list.append(ledN);
 				}
-				h += '<div>' + i18next.t("settingsex.led.controlled") + '&nbsp;' + (i + 1) + ':&nbsp;<input id="controlColor' + i + '" type="color" value="' + getHexColor(color) + '"/></div><br>';
 			}
-			h += "<br>";
-			list.innerHTML = h;
-			list.style.display = numControlColor > 0 ? null : "none";
 		}
 
 		async function fillSettings(settings) {
@@ -2218,7 +2263,7 @@
 			// rotary encoder
 			let rotarySettings = settings.rotary;
 			if (rotarySettings) {
-				document.getElementById("rotaryConfig").style.display = null;
+				$("#rotaryConfig").removeClass("d-none");
 				$('#rotaryReverse').prop('checked', rotarySettings.reverse);
 			}
 			// buttons
