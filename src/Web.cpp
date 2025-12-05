@@ -28,6 +28,10 @@
 #include "soc/timer_group_reg.h"
 #include "soc/timer_group_struct.h"
 
+#ifdef DLNA_ENABLE
+	#include "MediaServer.h"
+#endif
+
 #include <Update.h>
 #include <WiFi.h>
 #include <esp_task_wdt.h>
@@ -89,6 +93,12 @@ static void handleGetInfo(AsyncWebServerRequest *request);
 static void handleGetSettings(AsyncWebServerRequest *request);
 static void handlePostSettings(AsyncWebServerRequest *request, JsonVariant &json);
 static void handleDebugRequest(AsyncWebServerRequest *request);
+
+#ifdef DLNA_ENABLE
+static void handleMediaServerInfoRequest(AsyncWebServerRequest *request);
+static void handleMediaServerBrowseRequest(AsyncWebServerRequest *request);
+static void handleMediaServerDiscoveryRequest(AsyncWebServerRequest *request);
+#endif
 
 static void onWebsocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 static void settingsToJSON(JsonObject obj, const String section);
@@ -351,6 +361,9 @@ void Web_Cyclic(void) {
 		lastCleanupClientsTimestamp = millis();
 		ws.cleanupClients();
 	}
+#ifdef DLNA_ENABLE
+	MediaServer_Cyclic();
+#endif
 }
 // handle not found
 void notFound(AsyncWebServerRequest *request) {
@@ -561,6 +574,11 @@ void webserverStart(void) {
 
 		wServer.on("/exploreraudio", HTTP_POST, explorerHandleAudioRequest);
 
+#ifdef DLNA_ENABLE
+		wServer.on("/mediaserver/info", HTTP_GET, handleMediaServerInfoRequest);
+		wServer.on("/mediaserver/browse", HTTP_GET, handleMediaServerBrowseRequest);
+		wServer.on("/mediaserver/discover", HTTP_POST, handleMediaServerDiscoveryRequest);
+#endif
 		wServer.on("/trackprogress", HTTP_GET, handleTrackProgressRequest);
 
 		wServer.on("/savedSSIDs", HTTP_GET, handleGetSavedSSIDs);
@@ -1434,7 +1452,18 @@ void Web_SendWebsocketData(uint32_t client, WebsocketCodeType code) {
 		entry["posPercent"] = gPlayProperties.currentRelPos;
 		entry["time"] = AudioPlayer_GetCurrentTime();
 		entry["duration"] = AudioPlayer_GetFileDuration();
-	};
+	}
+#ifdef DLNA_ENABLE
+	else if (code == WebsocketCodeType::MediaServerDiscovery) {
+		MediaServerInfo_t info = MediaServer_GetInfo();
+		JsonObject entry = object["mediaserver"].to<JsonObject>();
+		entry["discovered"] = true;
+		entry["name"] = info.name;
+		entry["location"] = info.location;
+		entry["usn"] = info.usn;
+	}
+#endif
+	;
 
 	if (doc.overflowed()) {
 		// JSON buffer too small for data
@@ -1456,6 +1485,65 @@ void Web_SendWebsocketData(uint32_t client, WebsocketCodeType code) {
 		ws.text(client, jsonBuffer);
 	}
 }
+
+#ifdef DLNA_ENABLE
+// Overloaded version for MediaServer browse results with nodeId and data
+void Web_SendWebsocketData(uint32_t client, WebsocketCodeType code, const char *nodeId, const char *data) {
+	if (!webserverStarted) {
+		return;
+	}
+	if (ws.count() == 0) {
+		return;
+	}
+
+	if (code != WebsocketCodeType::MediaServerBrowseResult) {
+		// Only MediaServerBrowseResult is supported for this overload
+		return;
+	}
+
+	#ifdef BOARD_HAS_PSRAM
+	SpiRamAllocator allocator;
+	JsonDocument doc(&allocator);
+	JsonDocument itemsDoc(&allocator);
+	#else
+	JsonDocument doc;
+	JsonDocument itemsDoc;
+	#endif
+
+	// Parse items JSON data (already in correct format from MediaServer)
+	DeserializationError error = deserializeJson(itemsDoc, data);
+	if (error) {
+		Log_Printf(LOGLEVEL_ERROR, "Failed to parse MediaServer JSON in WebSocket: %s", error.c_str());
+		return;
+	}
+
+	JsonObject object = doc.to<JsonObject>();
+	JsonObject msEntry = object["mediaserver"].to<JsonObject>();
+	msEntry["browseReady"] = true;
+	msEntry["nodeId"] = nodeId;
+
+	// Copy items array directly (already in correct format)
+	msEntry["items"] = itemsDoc.as<JsonArray>();
+
+	if (doc.overflowed()) {
+		Log_Println(jsonbufferOverflow, LOGLEVEL_ERROR);
+		return;
+	}
+
+	const size_t len = measureJson(doc);
+	AsyncWebSocketMessageBuffer *jsonBuffer = ws.makeBuffer(len);
+	if (!jsonBuffer) {
+		Log_Println(unableToAllocateMem, LOGLEVEL_ERROR);
+		return;
+	}
+	serializeJson(doc, jsonBuffer->get(), len);
+	if (client == 0) {
+		ws.textAll(jsonBuffer);
+	} else {
+		ws.text(client, jsonBuffer);
+	}
+}
+#endif
 
 // Processes websocket-requests
 void onWebsocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -1944,7 +2032,70 @@ void explorerHandleAudioRequest(AsyncWebServerRequest *request) {
 		if (gPlayProperties.dontAcceptRfidTwice) {
 			Rfid_ResetOldRfid();
 		}
+
+		Log_Printf(LOGLEVEL_DEBUG, "explorerHandleAudioRequest: path=%s, playMode=%d", filePath, playMode);
+
+#ifdef DLNA_ENABLE
+		// Check if this is a MediaServer directory request (objectId format)
+		String path = String(filePath);
+
+		// MediaServer objectIds are anything that:
+		// - Is in WEBSTREAM mode (8)
+		// - Does NOT start with http:// or https://
+		// - Does NOT contain slashes (file paths have slashes)
+		bool isMediaServerObjectId = false;
+		if (playMode == WEBSTREAM && path.length() > 0) {
+			if (!path.startsWith("http://") && !path.startsWith("https://") && path.indexOf('/') < 0) {
+				isMediaServerObjectId = true;
+				Log_Printf(LOGLEVEL_DEBUG, "Detected as MediaServer objectId");
+			}
+		}
+
+		if (isMediaServerObjectId) {
+			// This looks like a MediaServer objectId (e.g., "4:cont2:5121" or "7_fd6b66c0")
+			Log_Printf(LOGLEVEL_NOTICE, "MediaServer directory request: objectId=%s", filePath);
+
+			// Browse MediaServer and get URLs
+			std::vector<String> urls = MediaServer_GetDirectoryUrls(filePath);
+
+			if (urls.size() == 0) {
+				Log_Println("Failed to get MediaServer playlist", LOGLEVEL_ERROR);
+				request->send(500, "text/plain", "Failed to browse MediaServer directory");
+				return;
+			}
+
+			// Create playlist in special format for WEBSTREAM mode
+			// Convert vector to M3U-like format that AudioPlayer can handle
+			String playlistContent = "";
+			for (size_t i = 0; i < urls.size(); i++) {
+				playlistContent += urls[i];
+				if (i < urls.size() - 1) {
+					playlistContent += "\n";
+				}
+			}
+
+			// Write to temporary M3U file
+			String tempM3uPath = "/.mediaserver_temp.m3u";
+			File m3uFile = gFSystem.open(tempM3uPath, FILE_WRITE);
+			if (!m3uFile) {
+				Log_Println("Failed to create temp M3U file", LOGLEVEL_ERROR);
+				request->send(500, "text/plain", "Failed to create playlist file");
+				return;
+			}
+			m3uFile.print(playlistContent);
+			m3uFile.close();
+
+			Log_Printf(LOGLEVEL_NOTICE, "Created MediaServer playlist with %d tracks", urls.size());
+
+			// Start playback with LOCAL_M3U mode
+			AudioPlayer_SetPlaylist(tempM3uPath.c_str(), 0, LOCAL_M3U, 0);
+		} else {
+			// Regular file or webstream
+			AudioPlayer_SetPlaylist(filePath, 0, playMode, 0);
+		}
+#else
 		AudioPlayer_SetPlaylist(filePath, 0, playMode, 0);
+#endif
 	} else {
 		Log_Println("AUDIO: No path variable set", LOGLEVEL_ERROR);
 	}
@@ -2499,3 +2650,66 @@ static void handleCoverImageRequest(AsyncWebServerRequest *request) {
 	response->addHeader("Cache-Control", "no-cache, must-revalidate");
 	request->send(response);
 }
+
+#ifdef DLNA_ENABLE
+// Handle MediaServer info request (returns current server info)
+static void handleMediaServerInfoRequest(AsyncWebServerRequest *request) {
+	if (!MediaServer_IsConnected()) {
+		request->send(200, "application/json", "{}");
+		return;
+	}
+
+	MediaServerInfo_t info = MediaServer_GetInfo();
+
+	JsonDocument doc;
+	doc["discovered"] = info.available;
+	doc["name"] = info.name;
+	doc["location"] = info.location;
+	doc["usn"] = info.usn;
+	doc["serverId"] = info.serverId;
+
+	String jsonString;
+	serializeJson(doc, jsonString);
+
+	request->send(200, "application/json", jsonString);
+}
+
+// Handle MediaServer browse request (non-blocking, results via WebSocket)
+static void handleMediaServerBrowseRequest(AsyncWebServerRequest *request) {
+	if (!request->hasParam("objectId") || !request->hasParam("nodeId")) {
+		request->send(400, "application/json", "{\"error\":\"Missing objectId or nodeId parameter\"}");
+		return;
+	}
+
+	if (!MediaServer_IsConnected()) {
+		request->send(503, "application/json", "{\"error\":\"No MediaServer available\"}");
+		return;
+	}
+
+	String objectId = request->getParam("objectId")->value();
+	String nodeId = request->getParam("nodeId")->value();
+	uint8_t serverId = request->hasParam("serverId") ? request->getParam("serverId")->value().toInt() : 0;
+
+	Log_Printf(LOGLEVEL_DEBUG, "MediaServer browse request for serverId=%d, objectId=%s, nodeId=%s", serverId, objectId.c_str(), nodeId.c_str());
+
+	// Start non-blocking browse operation (result will be sent via WebSocket)
+	if (!MediaServer_Browse(serverId, objectId.c_str(), nodeId.c_str())) {
+		request->send(500, "application/json", "{\"error\":\"Failed to start browse\"}");
+		return;
+	}
+
+	// Return 202 Accepted - result will arrive via WebSocket
+	request->send(202, "application/json", "{\"status\":\"Browse started\"}");
+}
+
+// Handle MediaServer discovery request (triggers new discovery scan)
+static void handleMediaServerDiscoveryRequest(AsyncWebServerRequest *request) {
+	Log_Println("MediaServer discovery request received", LOGLEVEL_INFO);
+
+	// Trigger discovery (non-blocking, runs in task)
+	MediaServer_TriggerDiscovery();
+
+	// Return 202 Accepted - result will arrive via WebSocket when discovery completes
+	request->send(202, "application/json", "{\"status\":\"Discovery started\"}");
+}
+#endif // DLNA_ENABLE

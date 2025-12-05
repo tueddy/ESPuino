@@ -10,7 +10,7 @@ info:
 servers:
   - url: /
     description: Local Device
-  - url: 'http://espuino.local/'
+  - url: "http://espuino.local/"
     description: Development ESPuino
 paths:
   /explorer:
@@ -25,7 +25,7 @@ paths:
             default: /
           description: Path to the directory to be listed.
       responses:
-        '200':
+        "200":
           description: Directory content successfully listed.
           content:
             application/json:
@@ -61,7 +61,7 @@ paths:
                   type: string
                   format: binary
       responses:
-        '200':
+        "200":
           description: File successfully uploaded.
     delete:
       summary: Delete a file or directory.
@@ -73,7 +73,7 @@ paths:
             type: string
           description: Path to the file or directory to be deleted.
       responses:
-        '200':
+        "200":
           description: File or directory successfully deleted.
     put:
       summary: Create a new directory.
@@ -85,7 +85,7 @@ paths:
             type: string
           description: Path for the new directory to be created.
       responses:
-        '200':
+        "200":
           description: Directory successfully created.
     patch:
       summary: Rename a file.
@@ -102,7 +102,7 @@ paths:
             type: string
           description: New path for the file.
       responses:
-        '200':
+        "200":
           description: File successfully renamed.
   /exploreraudio:
     post:
@@ -120,7 +120,7 @@ paths:
             type: string
           description: Play mode for audio.
       responses:
-        '200':
+        "200":
           description: Successful audio play.
           content:
             application/json:
@@ -140,14 +140,14 @@ paths:
             type: string
           description: Path of the file to download.
       responses:
-        '200':
+        "200":
           description: Successful download.
   /savedSSIDs:
     get:
       summary: Get a list of saved networks.
       description: Get a list of saved Wi-Fi networks.
       responses:
-        '200':
+        "200":
           description: Successful response with saved networks.
           content:
             application/json:
@@ -186,7 +186,7 @@ paths:
                 - SSID
                 - pwd
       responses:
-        '200':
+        "200":
           description: Successful network save.
     delete:
       summary: Delete a saved network.
@@ -198,14 +198,14 @@ paths:
             type: string
           description: SSID of the network to delete.
       responses:
-        '200':
+        "200":
           description: Successful network deletion.
   /activeSSID:
     get:
       summary: Get the current active network name.
       description: Get the SSID of the currently active network.
       responses:
-        '200':
+        "200":
           description: Successful response with active network name.
           content:
             application/json:
@@ -216,7 +216,7 @@ paths:
       summary: Get current common Wi-Fi configuration.
       description: Get the current common Wi-Fi configuration settings.
       responses:
-        '200':
+        "200":
           description: Successful response with Wi-Fi configuration.
           content:
             application/json:
@@ -246,12 +246,12 @@ paths:
                 - hostname
                 - ScanWiFiOnStart
       responses:
-        '200':
+        "200":
           description: Successful Wi-Fi configuration save.
   /settings:
     get:
       summary: Get common settings.
-      description: 'Get common settings, optionally for a specific section.'
+      description: "Get common settings, optionally for a specific section."
       parameters:
         - in: query
           name: section
@@ -259,7 +259,7 @@ paths:
             type: string
           description: Optional section to retrieve specific settings.
       responses:
-        '200':
+        "200":
           description: Successful response with common settings.
           content:
             application/json:
@@ -306,7 +306,7 @@ paths:
               required:
                 - general
       responses:
-        '200':
+        "200":
           description: Successful settings save.
   /rfid:
     get:
@@ -321,7 +321,7 @@ paths:
             type: string
           description: Optional ID to list only a single assignment.
       responses:
-        '200':
+        "200":
           description: Successful response with RFID-tag assignments.
           content:
             application/json:
@@ -355,7 +355,7 @@ paths:
                 - id
                 - fileOrUrl
       responses:
-        '200':
+        "200":
           description: Successful RFID-tag assignment save.
     delete:
       summary: Delete an RFID-tag assignment.
@@ -367,14 +367,14 @@ paths:
             type: string
           description: ID of the RFID-tag assignment to delete.
       responses:
-        '200':
+        "200":
           description: Successful RFID-tag assignment deletion.
   /rfid/ids-only:
     get:
       summary: Get an array of RFID tag ID names.
       description: Returns an array of RFID tag IDs without additional details.
       responses:
-        '200':
+        "200":
           description: Successful response with RFID tag IDs.
           content:
             application/json:
@@ -387,7 +387,7 @@ paths:
       summary: Get album cover image.
       description: Handle album cover image requests and serve the current cover art image.
       responses:
-        '200':
+        "200":
           description: Successful response with album cover image.
           content:
             image/jpeg:
@@ -399,7 +399,7 @@ paths:
       summary: Get common information.
       description: Returns a JSON object with common information about ESPuino.
       responses:
-        '200':
+        "200":
           description: Successful response with common information.
           content:
             application/json:
@@ -413,7 +413,7 @@ paths:
       summary: Get current log.
       description: Returns the current log as text.
       responses:
-        '200':
+        "200":
           description: Successful response with log text.
           content:
             text/plain:
@@ -424,7 +424,7 @@ paths:
       summary: Get task runtime information.
       description: Returns an HTML webpage with task runtime information.
       responses:
-        '200':
+        "200":
           description: Successful response with task runtime information.
           content:
             text/html:
@@ -435,7 +435,7 @@ paths:
       summary: Get debug information.
       description: Returns task runtime and debug information as JSON.
       responses:
-        '200':
+        "200":
           description: Successful response with debug information.
           content:
             application/json:
@@ -449,7 +449,7 @@ paths:
       summary: Upload NVS backup.
       description: Uploads a NVS backup file.
       responses:
-        '200':
+        "200":
           description: Successful response for NVS backup upload.
       requestBody:
         required: true
@@ -466,7 +466,7 @@ paths:
       summary: Upload new firmware.
       description: Uploads new firmware to ESPuino. Make sure to restart afterwards.
       responses:
-        '200':
+        "200":
           description: Successful response for firmware update.
       requestBody:
         required: true
@@ -483,21 +483,21 @@ paths:
       summary: Restart ESPuino.
       description: Performs a restart of ESPuino. No parameters required.
       responses:
-        '200':
+        "200":
           description: Successful response for ESPuino restart.
   /shutdown:
     post:
       summary: Shutdown ESPuino.
       description: Performs a shutdown (deep-sleep) of ESPuino. No parameters required.
       responses:
-        '200':
+        "200":
           description: Successful response for ESPuino shutdown.
   /rfidnvserase:
     post:
       summary: Erase RFID assignments from NVS.
       description: Erases all RFID assignments from NVS.
       responses:
-        '200':
+        "200":
           description: Successful response for RFID assignments erasure.
   /wifiscan:
     get:
@@ -507,7 +507,7 @@ paths:
         return 0 results unless you start the scan from somewhere else
         (loop/setup). Do not request more often than 3-5 seconds!
       responses:
-        '200':
+        "200":
           description: Successful response with nearby WiFi networks.
           content:
             application/json:
@@ -518,9 +518,9 @@ paths:
   /trackprogress:
     get:
       summary: Get current track progress.
-      description: 'Get current track progress, time, and duration.'
+      description: "Get current track progress, time, and duration."
       responses:
-        '200':
+        "200":
           description: Successful response with track progress information.
           content:
             application/json:
@@ -534,5 +534,116 @@ paths:
       summary: Initialize Hall Effect Sensor Value.
       description: Initializes the Hall Effect Sensor Value.
       responses:
-        '200':
+        "200":
           description: Successful response for initializing Hall Effect Sensor Value.
+  /mediaserver/info:
+    get:
+      summary: Get MediaServer (DLNA) information.
+      description: >-
+        Returns information about the currently connected MediaServer (DLNA).
+        Returns an empty object if no server is connected.
+      responses:
+        "200":
+          description: Successful response with MediaServer information.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  discovered:
+                    type: boolean
+                    description: Whether a MediaServer is available.
+                  name:
+                    type: string
+                    description: Name of the MediaServer.
+                  location:
+                    type: string
+                    description: URL location of the MediaServer.
+                  usn:
+                    type: string
+                    description: Unique Service Name of the MediaServer.
+                  serverId:
+                    type: string
+                    description: Server ID of the MediaServer.
+  /mediaserver/browse:
+    get:
+      summary: Browse MediaServer (DLNA) content.
+      description: >-
+        Initiates a browse operation on the MediaServer. This is a non-blocking
+        operation - results will be sent via WebSocket. Returns HTTP 202 Accepted
+        when the browse operation is started successfully.
+      parameters:
+        - in: query
+          name: objectId
+          required: true
+          schema:
+            type: string
+          description: Object ID to browse in the MediaServer directory structure.
+        - in: query
+          name: nodeId
+          required: true
+          schema:
+            type: string
+          description: Node ID for the WebSocket client to receive results.
+        - in: query
+          name: serverId
+          schema:
+            type: integer
+            default: 0
+          description: Optional server ID (default is 0).
+      responses:
+        "202":
+          description: Browse operation started successfully. Results will arrive via WebSocket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Browse started"
+        "400":
+          description: Missing required parameters (objectId or nodeId).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "503":
+          description: No MediaServer available.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        "500":
+          description: Failed to start browse operation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /mediaserver/discover:
+    post:
+      summary: Trigger MediaServer (DLNA) discovery.
+      description: >-
+        Triggers a new discovery scan for MediaServers (DLNA) on the network.
+        This is a non-blocking operation - results will be sent via WebSocket
+        when discovery completes. Returns HTTP 202 Accepted when discovery is started.
+      responses:
+        "202":
+          description: Discovery started successfully. Results will arrive via WebSocket.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Discovery started"

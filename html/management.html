@@ -1529,10 +1529,42 @@
 		/* File Explorer functions begin*/
 		var lastSelectedNodePath = "";
 		$('#explorerTree').on('select_node.jstree', function (e, data) {
-			$('input[name=fileOrUrl]').val(data.node.data.path);
+			// For MediaServer files, use the URL instead of path
+			if (data.node.data.mediaserver && data.node.data.url && !data.node.data.directory) {
+				$('input[name=fileOrUrl]').val(data.node.data.url);
+			} else if (data.node.data.mediaserver && data.node.data.directory) {
+				// For MediaServer directories, create the special path format
+				var mediaserverPath = "mediaserver://" + mediaServerInfo.usn + "/" + data.node.data.objectId;
+				$('input[name=fileOrUrl]').val(mediaserverPath);
+			} else {
+				$('input[name=fileOrUrl]').val(data.node.data.path);
+			}
 			if (ActiveSubTab !== 'rfid-music-tab') {
 				$('#SubTab.nav-tabs a[id="rfid-music-tab"]').tab('show');
+			}	 // Handle MediaServer nodes
+			if (data.node.data.mediaserver) {
+				if (data.node.type == "mediaserver" || data.node.type == "folder") {
+					$('.option-folder').show();
+					$('.option-file').hide();
+					// Use MEDIASERVER_DIR (19) for MediaServer directories
+					$('#playMode option').removeAttr('selected').filter('[value=19]').attr('selected', true);
+				} else if (data.node.type == "audio") {
+					$('.option-file').show();
+					$('.option-folder').hide();
+					$('#playMode option').removeAttr('selected').filter('[value=8]').attr('selected', true);
+				}				// Trigger MediaServer browse if directory
+				if (lastSelectedNodePath != data.node.data.path && data.node.data.directory) {
+					var children = $("#explorerTree").jstree("get_children_dom", data.node.id);
+					if (children.length < 1) {
+						pendingBrowseNodeId = data.node.id;
+						loadMediaServerChildren(data.node.id);
+					}
+				}
+				lastSelectedNodePath = data.node.data.path;
+				return;
 			}
+
+			// Handle regular SD card nodes
 			if (data.node.type == "folder") {
 				$('.option-folder').show();
 				$('.option-file').hide();
@@ -1898,21 +1930,179 @@
 			}
 		}
 
+		/* MediaServer functions */
+		var mediaServerNodeId = null;
+		var mediaServerInfo = null;
+		var pendingBrowseNodeId = null;
+
+		function handleMediaServerMessage(data) {
+			if (data.discovered) {
+				console.log("MediaServer discovered:", data);
+				mediaServerInfo = data;
+				// Refresh MediaServer node (updates existing or creates new)
+				refreshMediaServerNode();
+			}
+			if (data.browseReady && data.nodeId && data.items) {
+				// Browse completed via WebSocket, populate node
+				console.log("MediaServer browse ready for nodeId:", data.nodeId, "items:", data.items.length);
+				populateMediaServerChildren(data.nodeId, data.items);
+			}
+		}
+
+		function addMediaServerNode() {
+			if (mediaServerNodeId) {
+				return; // Already added
+			}
+			var tree = $('#explorerTree').jstree(true);
+
+			// Add as root node (parent = null or '#')
+			mediaServerNodeId = tree.create_node('#', {
+				text: mediaServerInfo.name || "Media Server",
+				type: "mediaserver",
+				state: {
+					opened: false
+				},
+				data: {
+					path: "mediaserver://0",
+					directory: true,
+					mediaserver: true,
+					objectId: "0",
+					serverId: mediaServerInfo.serverId || 0
+				},
+				children: []
+			});
+		}
+
+		function loadMediaServerInfo() {
+			// Load MediaServer info on page load
+			getData("http://" + host + "/mediaserver/info", function (data) {
+				if (data && data.discovered) {
+					console.log("MediaServer info loaded:", data);
+					mediaServerInfo = data;
+					addMediaServerNode();
+				}
+			});
+		}
+
+		function refreshMediaServerNode() {
+			// Refresh MediaServer info and update node
+			getData("http://" + host + "/mediaserver/info", function (data) {
+				if (data && data.discovered) {
+					console.log("MediaServer info refreshed:", data);
+					mediaServerInfo = data;
+
+					// Update existing node or create new one
+					var tree = $('#explorerTree').jstree(true);
+					if (mediaServerNodeId && tree.get_node(mediaServerNodeId)) {
+						// Update existing node name
+						tree.rename_node(mediaServerNodeId, data.name || "Media Server");
+						// Clear children to force reload
+						var children = tree.get_node(mediaServerNodeId).children.slice();
+						children.forEach(function (childId) {
+							tree.delete_node(childId);
+						});
+					} else {
+						// Create new node
+						addMediaServerNode();
+					}
+				}
+			});
+		}
+
+		function loadMediaServerChildren(nodeId) {
+			var tree = $('#explorerTree').jstree(true);
+			var node = tree.get_node(nodeId);
+
+			// Change icon to loading
+			tree.set_type(nodeId, "mediaserver-loading");
+
+			// Request browse via REST API (non-blocking, result comes via WebSocket)
+			var objectId = node.data.objectId || "0";
+			var serverId = node.data.serverId || 0;
+			getData("http://" + host + "/mediaserver/browse?objectId=" + encodeURIComponent(objectId) + "&nodeId=" + encodeURIComponent(nodeId) + "&serverId=" + serverId, function (response) {
+				// 202 Accepted - result will arrive via WebSocket
+				console.log("Browse started for nodeId:", nodeId, "objectId:", objectId, "serverId:", serverId);
+			});
+			// Result will be handled by handleMediaServerMessage via WebSocket
+		}
+
+		function populateMediaServerChildren(nodeId, items) {
+			var tree = $('#explorerTree').jstree(true);
+			var node = tree.get_node(nodeId);
+
+			if (!node) {
+				console.error("Node not found:", nodeId);
+				return;
+			}
+
+			// Remove loading state
+			// Keep mediaserver type only for root node, use folder for subdirectories
+			var isRootMediaServer = node.data.objectId === "0" && node.data.mediaserver;
+			tree.set_type(nodeId, isRootMediaServer ? "mediaserver" : "folder");
+
+			// Clear existing children
+			deleteChildrenNodes(nodeId);
+
+			// Add new children
+			if (items && items.length > 0) {
+				sortData(items);
+				for (var i = 0; i < items.length; i++) {
+					var child = {
+						text: items[i].name,
+						type: items[i].dir ? "folder" : getType(items[i]),
+						data: {
+							path: "mediaserver://" + items[i].objectId,
+							directory: items[i].dir,
+							mediaserver: true,
+							objectId: items[i].objectId,
+							url: items[i].url,
+							serverId: node.data.serverId || 0
+						},
+						children: items[i].dir ? [] : undefined
+					};
+					tree.create_node(nodeId, child);
+				}
+			}
+			tree.open_node(nodeId);
+			pendingBrowseNodeId = null;
+		}
+
 		function refreshNode(nodeId) {
 			var ref = $('#explorerTree').jstree(true);
 			var node = ref.get_node(nodeId);
-			getData("http://" + host + "/explorer?path=" + encodeURIComponent(node.data.path), function (data) {
-				/* We now have data! */
-				deleteChildrenNodes(nodeId);
-				addFileDirectory(nodeId, data);
-				ref.open_node(nodeId);
-			});
+
+			// Check if it's a MediaServer node
+			if (node.data.mediaserver) {
+				loadMediaServerChildren(nodeId);
+			} else {
+				getData("http://" + host + "/explorer?path=" + encodeURIComponent(node.data.path), function (data) {
+					/* We now have data! */
+					deleteChildrenNodes(nodeId);
+					addFileDirectory(nodeId, data);
+					ref.open_node(nodeId);
+				});
+			}
 		}
 
 		function getType(data) {
 			var type = "";
 			if (data.dir) {
 				type = "folder";
+			} else if (data.fileType !== undefined) {
+				// MediaServer fileType: 0=other, 1=audio, 2=image, 3=video
+				switch (data.fileType) {
+					case 1:
+						type = "audio";
+						break;
+					case 2:
+						type = "image";
+						break;
+					case 3:
+						type = "video";
+						break;
+					default:
+						type = "file";
+				}
 			} else if ((/\.(mp3|ogg|oga|wav|wma|acc|m4a|flac|opus)$/i).test(data.name)) {
 				type = "audio";
 			} else if ((/\.(m3u|m3u8|asx|pls)$/i).test(data.name)) {
@@ -1923,9 +2113,7 @@
 				type = "file";
 			}
 			return type;
-		}
-
-		function addFileDirectory(parent, data) {
+		} function addFileDirectory(parent, data) {
 			sortData(data);
 			var ref = $('#explorerTree').jstree(true);
 			for (var i = 0; i < data.length; i++) {
@@ -1968,6 +2156,12 @@
 					'sdcard': {
 						'icon': "fa fa-sd-card"
 					},
+					'mediaserver': {
+						'icon': "fa fa-server"
+					},
+					'mediaserver-loading': {
+						'icon': "fa fa-spinner fa-spin"
+					},
 					'folder': {
 						'icon': "fa fa-folder"
 					},
@@ -1997,7 +2191,9 @@
 						var ref = $('#explorerTree').jstree(true);
 						var node = ref.get_node(nodeId);
 						var items = {};
-						if (node.data.directory) {
+
+						// Only allow createDir for non-MediaServer directories
+						if (node.data.directory && !node.data.mediaserver) {
 							items.createDir = {
 								label: () => i18next.t("files.context.newFolder"),
 								icon: "fas fa-folder",
@@ -2020,15 +2216,29 @@
 							label: () => i18next.t("files.context.play"),
 							icon: "fas fa-play",
 							action: function (x) {
-								var playMode = 1;
-								if (node.data.directory) {
-									playMode = 5;
-								} else {
-									if ((/\.(m3u|m3u8|asx|pls)$/i).test(node.data.path)) {
-										playMode = 11;
+								if (node.data.mediaserver) {
+									if (node.data.directory) {
+										// MediaServer directory - send objectId with WEBSTREAM mode
+										// Web.cpp will detect it and create playlist
+										console.log("Playing MediaServer directory:", node.data.objectId);
+										postData("http://" + host + "/exploreraudio?path=" + encodeURIComponent(node.data.objectId) + "&playmode=8");
+									} else if (node.data.url) {
+										// MediaServer file - use the download URL directly with WEBSTREAM mode (8)
+										console.log("Playing MediaServer file:", node.data.url);
+										postData("http://" + host + "/exploreraudio?path=" + encodeURIComponent(node.data.url) + "&playmode=8");
 									}
+								} else {
+									// Regular file or directory
+									var playMode = 1;
+									if (node.data.directory) {
+										playMode = 5;
+									} else {
+										if ((/\.(m3u|m3u8|asx|pls)$/i).test(node.data.path)) {
+											playMode = 11;
+										}
+									}
+									postData("http://" + host + "/exploreraudio?path=" + encodeURIComponent(node.data.path) + "&playmode=" + playMode);
 								}
-								postData("http://" + host + "/exploreraudio?path=" + encodeURIComponent(node.data.path) + "&playmode=" + playMode);
 							}
 						};
 						/* Refresh */
@@ -2036,33 +2246,42 @@
 							label: () => i18next.t("files.context.refresh"),
 							icon: "fas fa-sync",
 							action: function (x) {
+								// If MediaServer root node, trigger discovery
+								if (node.data.mediaserver && node.data.objectId === "0") {
+									console.log("Starting MediaServer discovery...");
+									postData("http://" + host + "/mediaserver/discover");
+								}
 								refreshNode(nodeId);
 							}
 						};
-						/* Delete */
-						items.delete = {
-							label: () => i18next.t("files.context.delete"),
-							icon: "fas fa-trash",
-							action: function (x) {
-								handleDeleteData(nodeId);
-								refreshNode(ref.get_parent(nodeId));
-							}
-						};
-						/* Rename */
-						items.rename = {
-							label: () => i18next.t("files.context.rename"),
-							icon: "fas fa-edit",
-							action: function (x) {
-								var srcPath = node.data.path;
-								ref.edit(nodeId, null, function (node, status) {
-									node.data.path = node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) + node.text;
-									patchData("http://" + host + "/explorer?srcpath=" + encodeURIComponent(srcPath) + "&dstpath=" + encodeURIComponent(node.data.path));
+						/* Delete - not for MediaServer */
+						if (!node.data.mediaserver) {
+							items.delete = {
+								label: () => i18next.t("files.context.delete"),
+								icon: "fas fa-trash",
+								action: function (x) {
+									handleDeleteData(nodeId);
 									refreshNode(ref.get_parent(nodeId));
-								});
-							}
-						};
-						/* Download */
-						if (!node.data.directory) {
+								}
+							};
+						}
+						/* Rename - not for MediaServer */
+						if (!node.data.mediaserver) {
+							items.rename = {
+								label: () => i18next.t("files.context.rename"),
+								icon: "fas fa-edit",
+								action: function (x) {
+									var srcPath = node.data.path;
+									ref.edit(nodeId, null, function (node, status) {
+										node.data.path = node.data.path.substring(0, node.data.path.lastIndexOf("/") + 1) + node.text;
+										patchData("http://" + host + "/explorer?srcpath=" + encodeURIComponent(srcPath) + "&dstpath=" + encodeURIComponent(node.data.path));
+										refreshNode(ref.get_parent(nodeId));
+									});
+								}
+							};
+						}
+						/* Download - not for MediaServer */
+						if (!node.data.directory && !node.data.mediaserver) {
 							items.download = {
 								label: () => i18next.t("files.context.download"),
 								icon: "fas fa-download",
@@ -2077,7 +2296,23 @@
 									document.body.removeChild(document.body.lastElementChild);
 								}
 							}
-						};
+						}
+						/* Download MediaServer file to SD card */
+						if (!node.data.directory && node.data.mediaserver && node.data.url) {
+							items.downloadToSD = {
+								label: "Download to SD",
+								icon: "fas fa-download",
+								action: function (x) {
+									console.log("Downloading MediaServer file to SD:", node.text);
+									var serverId = node.data.serverId || 0;
+									var objectId = node.data.objectId;
+									postData("http://" + host + "/mediaserver/download?serverId=" + serverId + "&objectId=" + encodeURIComponent(objectId) + "&filename=" + encodeURIComponent(node.text), function (response) {
+										console.log("Download started:", response);
+										alert("Download started: " + node.text);
+									});
+								}
+							};
+						}
 						return items;
 					}
 				}
@@ -2164,6 +2399,9 @@
 					if (toolsTabActive) {
 						rebuildRFIDList();
 					}
+				}
+				if ("mediaserver" in socketMsg) {
+					handleMediaServerMessage(socketMsg.mediaserver);
 				}
 				if ("status" in socketMsg) {
 					if (socketMsg.status == "ok") {
@@ -3040,6 +3278,7 @@
 		$(document).ready(function () {
 			connect();
 			buildFileSystemTree("/");
+			loadMediaServerInfo(); // Load MediaServer info on page load
 			$('#deleteSSIDModal').on('show.bs.modal', function (event) {
 				var ssid = $(event.relatedTarget).data('ssid')
 				$(this).find('.modal-title').text(i18next.t("wifi.delete.title"));

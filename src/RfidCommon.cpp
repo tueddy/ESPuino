@@ -12,6 +12,10 @@
 #include "System.h"
 #include "Web.h"
 
+#ifdef DLNA_ENABLE
+	#include "MediaServer.h"
+#endif
+
 unsigned long Rfid_LastRfidCheckTimestamp = 0;
 char gCurrentRfidTagId[cardIdStringSize] = ""; // No crap here as otherwise it could be shown in GUI
 char gOldRfidTagId[cardIdStringSize] = "X"; // Init with crap
@@ -95,13 +99,28 @@ void Rfid_PreferenceLookupHandler(void) {
 				}
 	#endif
 
+	#ifdef DLNA_ENABLE
+				// Check if this is a MediaServer objectId (contains ':' but not 'http')
+				String filePath = String(_file);
+				if (_playMode == WEBSTREAM && filePath.indexOf(':') >= 0 && !filePath.startsWith("http")) {
+					// This is a MediaServer objectId - request async playlist creation
+					Log_Printf(LOGLEVEL_NOTICE, "RFID: MediaServer directory objectId=%s", _file);
+					if (!MediaServer_RequestPlaylist(_file, _playMode, _trackLastPlayed)) {
+						Log_Println("Failed to queue MediaServer playlist request", LOGLEVEL_ERROR);
+					}
+					// AudioPlayer will be triggered automatically when playlist is ready
+				} else {
+					// Regular file or webstream
+					AudioPlayer_SetPlaylist(_file, _lastPlayPos, _playMode, _trackLastPlayed);
+				}
+	#else
 				AudioPlayer_SetPlaylist(_file, _lastPlayPos, _playMode, _trackLastPlayed);
+	#endif
 			}
 		}
 	}
 #endif
 }
-
 void Rfid_ResetOldRfid() {
 	strncpy(gOldRfidTagId, "X", cardIdStringSize - 1);
 }

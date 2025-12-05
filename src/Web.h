@@ -11,8 +11,11 @@ typedef enum class WebsocketCode {
 	Volume,
 	Settings,
 	Ssid,
-	TrackProgress
+	TrackProgress,
+	MediaServerDiscovery,
+	MediaServerBrowseResult
 } WebsocketCodeType;
 
 void Web_Cyclic(void);
 void Web_SendWebsocketData(uint32_t client, WebsocketCodeType code);
+void Web_SendWebsocketData(uint32_t client, WebsocketCodeType code, const char *nodeId, const char *data);
