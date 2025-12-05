@@ -90,12 +90,16 @@ static void MediaServer_Init(void) {
 
 // Cyclic task for MediaServer handling (called from main loop)
 void MediaServer_Cyclic(void) {
+	if (System_GetOperationMode() != OPMODE_NORMAL) {
+		// MediaServer only available in normal operation mode
+		return;
+	}
 	// Initialize on first call
 	if (!initialized) {
 		MediaServer_Init();
 		initialized = true;
 	}
-	
+
 	if (!Wlan_IsConnected()) {
 		// WiFi disconnected - stop task if running
 		if (mediaServerTaskHandle != NULL) {
@@ -214,46 +218,10 @@ bool MediaServer_BrowseSync(const char *serverUsn, const char *objectId, std::ve
 	return urls.size() > 0;
 }
 
-/*
-// Download MediaServer file to SD card (non-blocking) - REMOVED (unreliable)
-bool MediaServer_DownloadToSD(uint8_t serverId, const char *objectId, const char *filename) {
-	if (!serverFound) {
-		Log_Println("Cannot download: Discovery not yet complete", LOGLEVEL_ERROR);
-		return false;
-	}
-
-	if (!currentMediaServer.available) {
-		Log_Println("Cannot download: No MediaServer available", LOGLEVEL_ERROR);
-		return false;
-	}
-
-	// Queue download request for task
-	if (xSemaphoreTake(downloadMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-		if (pendingDownloadRequest.pending) {
-			xSemaphoreGive(downloadMutex);
-			Log_Println("Download already in progress", LOGLEVEL_NOTICE);
-			return false;
-		}
-
-		pendingDownloadRequest.serverId = serverId;
-		pendingDownloadRequest.objectId = String(objectId);
-		pendingDownloadRequest.filename = String(filename);
-		pendingDownloadRequest.pending = true;
-		xSemaphoreGive(downloadMutex);
-
-		Log_Printf(LOGLEVEL_INFO, "Queued download request: serverId=%d, objectId=%s, filename=%s",
-			serverId, objectId, filename);
-		return true;
-	}
-
-	Log_Println("Failed to queue download request (mutex timeout)", LOGLEVEL_ERROR);
-	return false;
-}
-*/
-
 // FreeRTOS task for DLNA operations
 static void mediaServerTask(void *parameter) {
 	Log_Println("MediaServer task started", LOGLEVEL_NOTICE);
+	Log_Printf(LOGLEVEL_DEBUG, "MediaServer started, Free heap: %d bytes", ESP.getFreeHeap());
 
 	while (true) {
 		// Check WiFi and perform discovery
@@ -309,7 +277,7 @@ static void mediaServerTask(void *parameter) {
 // Returns vector of URLs, empty vector on error
 std::vector<String> MediaServer_GetDirectoryUrls(const char *objectId) {
 	std::vector<String> urls;
-	
+
 	if (!serverFound || !currentMediaServer.available) {
 		Log_Println("Cannot browse: No MediaServer available", LOGLEVEL_ERROR);
 		return urls;
@@ -317,11 +285,11 @@ std::vector<String> MediaServer_GetDirectoryUrls(const char *objectId) {
 
 	uint8_t serverId = currentMediaServer.serverId;
 	Log_Printf(LOGLEVEL_INFO, "Browsing MediaServer directory: serverId=%d, objectId=%s", serverId, objectId);
-	
+
 	// Browse server - results stored in vector
 	soapObjectVect_t browseResult;
 	bool success = soap.browseServer(serverId, objectId, &browseResult);
-	
+
 	if (!success || browseResult.size() == 0) {
 		Log_Printf(LOGLEVEL_NOTICE, "Browse returned no items for objectId=%s", objectId);
 		return urls;
@@ -332,7 +300,7 @@ std::vector<String> MediaServer_GetDirectoryUrls(const char *objectId) {
 	// Extract audio file URLs
 	for (size_t i = 0; i < browseResult.size(); i++) {
 		const soapObject_t &item = browseResult[i];
-		
+
 		// Only add audio files (not directories)
 		if (!item.isDirectory && item.fileType == fileTypeAudio && item.uri.length() > 0) {
 			// Build complete URL from downloadIp, downloadPort and uri
@@ -340,9 +308,8 @@ std::vector<String> MediaServer_GetDirectoryUrls(const char *objectId) {
 			if (!uri.startsWith("/")) {
 				uri = "/" + uri;
 			}
-			String fileUrl = "http://" + item.downloadIp.toString() + ":" + 
-						 String(item.downloadPort) + uri;
-			
+			String fileUrl = "http://" + item.downloadIp.toString() + ":" + String(item.downloadPort) + uri;
+
 			urls.push_back(fileUrl);
 			Log_Printf(LOGLEVEL_DEBUG, "Added to playlist [%d]: %s", urls.size() - 1, fileUrl.c_str());
 		}
@@ -369,7 +336,7 @@ bool MediaServer_RequestPlaylist(const char *objectId, uint32_t playMode, uint32
 	pendingPlaylistRequest.trackLastPlayed = trackLastPlayed;
 	pendingPlaylistRequest.pending = true;
 
-	Log_Printf(LOGLEVEL_INFO, "Queued playlist request: objectId=%s, playMode=%d, trackLastPlayed=%d", 
+	Log_Printf(LOGLEVEL_INFO, "Queued playlist request: objectId=%s, playMode=%d, trackLastPlayed=%d",
 		objectId, playMode, trackLastPlayed);
 	return true;
 }
@@ -380,7 +347,7 @@ static void processPlaylistRequest(const String &objectId, uint32_t playMode, ui
 
 	// Get URLs from MediaServer
 	std::vector<String> urls = MediaServer_GetDirectoryUrls(objectId.c_str());
-	
+
 	if (urls.size() == 0) {
 		Log_Println("Failed to get MediaServer URLs", LOGLEVEL_ERROR);
 		return;

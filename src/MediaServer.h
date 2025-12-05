@@ -4,7 +4,7 @@
 
 #ifdef DLNA_ENABLE
 
-#include <Arduino.h>
+	#include <Arduino.h>
 
 // MediaServer types for communication
 typedef struct {
@@ -32,7 +32,7 @@ bool MediaServer_Browse(uint8_t serverId, const char *objectId, const char *node
 std::vector<String> MediaServer_GetDirectoryUrls(const char *objectId);
 
 // Request MediaServer playlist creation (async, for RFID/AudioPlayer)
-// Creates /mediaserver_temp.m3u and triggers callback when ready
+// Creates /.mediaserver_temp.m3u and triggers callback when ready
 // Returns false if request cannot be queued
 bool MediaServer_RequestPlaylist(const char *objectId, uint32_t playMode, uint32_t trackLastPlayed);
 
