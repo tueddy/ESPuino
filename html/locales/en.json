@@ -321,11 +321,20 @@
 		},
 		"device": {
 			"title": "Bluetooth device (headphone)",
-			"placeholder": "e.g. My POGS Wireless Headphone"
+			"placeholder": "e.g. My POGS Wireless Headphone",
+			"hint": {
+				"click": "Click field to see available devices",
+				"nodevices": "No devices found",
+				"available": "{{count}} device(s) available",
+				"help": "Available Bluetooth devices are automatically detected and displayed in the dropdown list. Select a device from the list or enter a name manually.<br><br><strong>Note:</strong> Device scanning is only performed when no device is already saved/paired."
+			}
 		},
 		"pincode": {
 			"title": "Pairing PIN-Code",
 			"placeholder": "e.g. 0000"
+		},
+		"status": {
+			"connected": "Connected to: {{device}}"
 		}
 	},
 	"general": {

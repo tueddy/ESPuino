@@ -7,6 +7,7 @@
 #include "AsyncJson.h"
 #include "AudioPlayer.h"
 #include "Battery.h"
+#include "Bluetooth.h"
 #include "Cmd.h"
 #include "Common.h"
 #include "ESPAsyncWebServer.h"
@@ -840,6 +841,10 @@ bool JSONToSettings(JsonObject doc) {
 		gPrefsSettings.putString("btDeviceName", (String) _btDeviceName);
 		const char *btPinCode = doc["bluetooth"]["pinCode"];
 		gPrefsSettings.putString("btPinCode", (String) btPinCode);
+		// Check if connect action is requested
+		if (doc["bluetooth"]["connect"].is<bool>() && doc["bluetooth"]["connect"]) {
+			Bluetooth_ConnectDevice(_btDeviceName);
+		}
 		// Check if settings were written successfully
 		if (gPrefsSettings.getString("btDeviceName", "") != _btDeviceName || gPrefsSettings.getString("btPinCode", "") != btPinCode) {
 			Log_Printf(LOGLEVEL_ERROR, webSaveSettingsError, "bluetooth");
@@ -1462,6 +1467,18 @@ void Web_SendWebsocketData(uint32_t client, WebsocketCodeType code) {
 		entry["posPercent"] = gPlayProperties.currentRelPos;
 		entry["time"] = AudioPlayer_GetCurrentTime();
 		entry["duration"] = AudioPlayer_GetFileDuration();
+	} else if (code == WebsocketCodeType::BluetoothDeviceList) {
+		// Build Bluetooth device list JSON array
+		JsonArray devices = object["bluetoothDevices"].to<JsonArray>();
+		Bluetooth_GetDeviceList([&devices](const char *name, int rssi) {
+		// Only add device name, not RSSI (already sorted by signal strength)
+		devices.add(name);
+		});
+	} else if (code == WebsocketCodeType::BluetoothConnectionStatus) {
+		// Send Bluetooth connection status
+		JsonObject btStatus = object["bluetoothStatus"].to<JsonObject>();
+		btStatus["connected"] = Bluetooth_Device_Connected();
+		btStatus["deviceName"] = Bluetooth_GetConnectedDeviceName();
 	};
 
 	if (doc.overflowed()) {
@@ -1496,6 +1513,8 @@ void onWebsocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
 		Log_Printf(LOGLEVEL_DEBUG, "ws[%s][%u] connect", server->url(), client->id());
 		// Send initial operation mode and RSSI to newly connected client
 		Web_SendWebsocketData(client->id(), WebsocketCodeType::OperationMode);
+		// Send initial Bluetooth connection status to newly connected client
+		Web_SendWebsocketData(client->id(), WebsocketCodeType::BluetoothConnectionStatus);
 		// client->printf("Hello Client %u :)", client->id());
 		// client->ping();
 	} else if (type == WS_EVT_DISCONNECT) {

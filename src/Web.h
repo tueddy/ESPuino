@@ -12,7 +12,9 @@ typedef enum class WebsocketCode {
 	Settings,
 	Ssid,
 	TrackProgress,
-	OperationMode
+	OperationMode,
+	BluetoothDeviceList,
+	BluetoothConnectionStatus
 } WebsocketCodeType;
 
 void Web_Cyclic(void);

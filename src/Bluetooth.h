@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 void Bluetooth_Init(void);
 void Bluetooth_Cyclic(void);
 
@@ -15,3 +17,12 @@ void Bluetooth_SetVolume(const int32_t _newVolume, bool reAdjustRotary);
 
 bool Bluetooth_Source_SendAudioData(int16_t *outBuff, int32_t validSamples);
 bool Bluetooth_Device_Connected();
+
+// Bluetooth device connection
+void Bluetooth_ConnectDevice(const char* deviceName);
+String Bluetooth_GetConnectedDeviceName();
+
+// Bluetooth device list (for source mode) - callback for each device
+// callback signature: void callback(const char* name, int rssi)
+typedef std::function<void(const char* name, int rssi)> BluetoothDeviceCallback;
+void Bluetooth_GetDeviceList(BluetoothDeviceCallback callback);

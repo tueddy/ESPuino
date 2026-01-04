@@ -808,6 +808,14 @@
 		</div>
 		<!-- ### Tab Bluetooth ### -->
 		<div class="tab-pane main-tab-pane fade mb-4" id="nav-bt" role="tabpanel" aria-labelledby="nav-bt-tab">
+			<div class="container" id="btConnectionStatus" style="display: none;">
+				<div class="alert alert-info d-flex align-items-center" role="alert">
+					<i class="fab fa-bluetooth fa-2x me-3"></i>
+					<div>
+						<strong data-i18n="bt.status.connected"></strong>
+					</div>
+				</div>
+			</div>
 			<div class="container" id="btBackToNormal" style="display: none;">
 				<div class="mb-3 col-md-12">
 					<legend data-i18n="bt.normal.title">Zurück zum Normal-Modus</legend>
@@ -825,8 +833,18 @@
 					<div class="mb-3 col-md-12">
 						<legend data-i18n="bt.source.configtitle"></legend>
 						<label for="btDeviceName" data-i18n="[prepend]bt.device.title">:</label>
-						<input type="text" class="form-control" id="btDeviceName"
-							data-i18n="[placeholder]bt.device.placeholder" name="btDeviceName" value=""><br>
+						<div class="mb-2">
+							<input type="text" class="form-control" id="btDeviceName" list="btDeviceList"
+								data-i18n="[placeholder]bt.device.placeholder" name="btDeviceName" value=""
+								autocomplete="off">
+							<datalist id="btDeviceList"></datalist>
+							<small class="form-text text-muted">
+								<span id="btDeviceHint" data-i18n="bt.device.hint.click"></span>
+								<a href="#" class="link-secondary" data-bs-toggle="popover"
+									data-i18n="[data-bs-content]bt.device.hint.help" tabindex="0"><i
+										class="fas fa-circle-question"></i></a>
+							</small>
+						</div>
 						<label for="btPinCode" data-i18n="[prepend]bt.pincode.title">:</label>
 						<input type="text" class="form-control" id="btPinCode"
 							data-i18n="[placeholder]bt.pincode.placeholder" name="btPinCode" value="">
@@ -1390,6 +1408,10 @@
 			console.log("ActiveTab: " + ActiveTab);
 			if (ActiveTab == 'nav-control-tab') {
 				getTrackProgress();
+			}
+			if (ActiveTab == 'nav-bt-tab') {
+				// Request current Bluetooth status
+				postData("http://" + host + "/trackinfo");
 			}
 			localStorage.setItem("active-tab", ActiveTab);
 		});
@@ -2263,6 +2285,12 @@
 				if ("settings" in socketMsg) {
 					fillSettings(socketMsg.settings);
 				}
+				if ("bluetoothDevices" in socketMsg) {
+					updateBluetoothDeviceList(socketMsg.bluetoothDevices);
+				}
+				if ("bluetoothStatus" in socketMsg) {
+					updateBluetoothStatus(socketMsg.bluetoothStatus);
+				}
 			};
 		}
 
@@ -2819,6 +2847,54 @@
 			};
 			var myJSON = JSON.stringify(myObj);
 			socket.send(myJSON);
+		}
+
+		// Bluetooth device list management (via WebSocket)
+		function updateBluetoothDeviceList(devices) {
+			console.log('Bluetooth devices received:', devices);
+			const datalist = document.getElementById('btDeviceList');
+			const hint = document.getElementById('btDeviceHint');
+
+			if (!datalist) return;
+
+			// Clear existing options
+			datalist.innerHTML = '';
+
+			// Add new options
+			devices.forEach(deviceName => {
+				const option = document.createElement('option');
+				option.value = deviceName;
+				datalist.appendChild(option);
+			});
+
+			// Update hint text
+			if (hint) {
+				if (devices.length === 0) {
+					hint.textContent = i18next.t('bt.device.hint.nodevices');
+				} else {
+					hint.textContent = i18next.t('bt.device.hint.available', { count: devices.length });
+				}
+			}
+		}
+
+		// Update Bluetooth connection status
+		function updateBluetoothStatus(status) {
+			console.log('Bluetooth status:', status);
+			const statusContainer = document.getElementById('btConnectionStatus');
+			const statusText = statusContainer.querySelector('[data-i18n="bt.status.connected"]');
+
+			if (!statusContainer || !statusText) {
+				console.log('Status container or status text element not found');
+				return;
+			}
+
+			console.log('Bluetooth connected:', status.connected, 'Device name:', status.deviceName);
+			if (status.connected && status.deviceName) {
+				statusText.textContent = i18next.t('bt.status.connected', { device: status.deviceName });
+				statusContainer.style.display = 'block';
+			} else {
+				statusContainer.style.display = 'none';
+			}
 		}
 
 		function removeTrSlash(str) {

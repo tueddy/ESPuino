@@ -321,11 +321,20 @@
 		},
 		"device": {
 			"title": "Périphérique Bluetooth (casque)",
-			"placeholder": "par exemple Mon casque sans fil POGS"
+			"placeholder": "par exemple Mon casque sans fil POGS",
+			"hint": {
+				"click": "Cliquez sur le champ pour voir les appareils disponibles",
+				"nodevices": "Aucun appareil trouvé",
+				"available": "{{count}} appareil(s) disponible(s)",
+				"help": "Les appareils Bluetooth disponibles sont automatiquement détectés et affichés dans la liste déroulante. Sélectionnez un appareil dans la liste ou entrez un nom manuellement.<br><br><strong>Remarque:</strong> La recherche d'appareils n'est effectuée que si aucun appareil n'est déjà enregistré/couplé."
+			}
 		},
 		"pincode": {
 			"title": "Code PIN de couplage",
 			"placeholder": "par exemple 0000"
+		},
+		"status": {
+			"connected": "Connecté à: {{device}}"
 		}
 	},
 	"general": {
