@@ -1471,8 +1471,8 @@ void Web_SendWebsocketData(uint32_t client, WebsocketCodeType code) {
 		// Build Bluetooth device list JSON array
 		JsonArray devices = object["bluetoothDevices"].to<JsonArray>();
 		Bluetooth_GetDeviceList([&devices](const char *name, int rssi) {
-		// Only add device name, not RSSI (already sorted by signal strength)
-		devices.add(name);
+			// Only add device name, not RSSI (already sorted by signal strength)
+			devices.add(name);
 		});
 	} else if (code == WebsocketCodeType::BluetoothConnectionStatus) {
 		// Send Bluetooth connection status
